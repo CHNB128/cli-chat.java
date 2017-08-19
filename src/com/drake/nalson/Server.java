@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 public class Server {
 
+    private Server _control;
+
     private final int port;
     private boolean close;
     private int clientId;
@@ -17,24 +19,36 @@ public class Server {
 
     Server(int port) throws IOException {
         this.port = port;
+        this._control = this;
     }
 
     public int start() throws IOException {
         this.server = new ServerSocket(port);
         this.clientList = new ArrayList<>();
         while (!close) {
-            Socket incoming = server.accept();
-            System.out.println("Connected : " + ++clientId);
-            Client client = new Client(incoming,clientId);
+            Socket incomingConnection = server.accept();
+            Client client = new Client(incomingConnection,_control,clientId++);
             clientList.add(client);
+            //infoClient("Client " + client.getId() + " connected.");
             new Thread(client).start();
         }
         return 0;
     }
 
+    public void infoClient(String msg) {
+        System.out.println(msg);
+        for(Client client : this.clientList) {
+            client.send(msg);
+        }
+    }
+
     public int stop() {
 
         return 0;
+    }
+
+    public ArrayList<Client> getClientList() {
+        return clientList;
     }
 
     /*

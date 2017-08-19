@@ -7,9 +7,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-class ChatClient implements Runnable {
+class ChatClient_test implements Runnable {
 
-    public ChatClient(Socket incoming, int i) {
+    public ChatClient_test(Socket incoming, int i) {
     }
 
     @Override
@@ -25,7 +25,7 @@ class ChatClient implements Runnable {
     private String msg;
     private PrintWriter out;
 
-    public ChatClient(Socket incoming, int clientId) {
+    public ChatClient_test(Socket incoming, int clientId) {
         this.connection = incoming;
         this.id = clientId;
     }

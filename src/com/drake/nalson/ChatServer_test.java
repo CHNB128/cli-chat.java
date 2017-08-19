@@ -5,7 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-class ChatServer {
+class ChatServer_test {
 
     private final ServerSocket server;
     private final int port;
@@ -15,7 +15,7 @@ class ChatServer {
 
     private Object _control;
 
-    ChatServer(int port) throws IOException{
+    ChatServer_test(int port) throws IOException{
         this._control = this;
         this.port = port;
         this.server = new ServerSocket(port);
@@ -31,7 +31,7 @@ class ChatServer {
         while (!drop) {
             Socket incoming = server.accept();
             out("Client " + clientId + " connected.");
-            ChatClient client = new ChatClient(incoming, this.clientId++);
+            ChatClient_test client = new ChatClient_test(incoming, this.clientId++);
             clientList.add(client);
             Thread t = new Thread(client);
             t.start();

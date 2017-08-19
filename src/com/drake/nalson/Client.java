@@ -8,15 +8,18 @@ public class Client implements Runnable {
     private final int id;
     private String name;
     private Socket connection;
+    private Server server;
     private BufferedReader serverIn;
     private BufferedReader clientIn;
     private PrintWriter clientOut;
     private String cmd;
     private String msg;
 
-    Client(Socket incoming, int clientId) {
-        this.connection = incoming;
+    Client(Socket incomingConnection,Server server, int clientId) {
+        this.connection = incomingConnection;
+        this.server = server;
         this.id = clientId;
+        this.name = "";
     }
 
     @Override
@@ -33,25 +36,39 @@ public class Client implements Runnable {
                         new InputStreamReader(System.in)
                 );
                 clientOut = new PrintWriter(
-                        new OutputStreamWriter(
-                                connection.getOutputStream(),
-                                "UTF-8"
-                        ),
+                        connection.getOutputStream(),
                         true
                 );
                 while ((cmd = serverIn.readLine()) != null) {
                     if (cmd.equalsIgnoreCase("exit")) break;
-                    clientOut.println(cmd);
-                    System.out.print(cmd);
+                    for(Client client : server.getClientList()) {
+                        client.send("Client " + id + " : " + cmd);
+                    }
                 }
             } catch (IOException e) {
-                System.out.println("Err : cannot initialize client stream \n :: " + e.getMessage());
+                System.out.println("Err : " + e.getMessage());
             } finally {
                 clientIn = null;
                 serverIn = null;
                 connection = null;
-                System.out.println("Info : client (id : " + id + ") disconnected");
+                server.infoClient("Info : client (id : " + id + ") disconnected");
             }
+        }
+    }
+
+    public void send(String msg){
+        try {
+            this.clientOut.println(msg);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getId() {
+        if(this.name != "") {
+            return name;
+        } else {
+            return String.valueOf(this.id);
         }
     }
 
