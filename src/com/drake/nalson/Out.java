@@ -46,10 +46,6 @@ public class Out {
 
         while ((userInput = inu.readLine())!=null) {
             out.println(userInput);
-            if (userInput.equalsIgnoreCase("close")) break;
-            if (userInput == "exit") {
-                break;
-            }
         }
 
         out.close();

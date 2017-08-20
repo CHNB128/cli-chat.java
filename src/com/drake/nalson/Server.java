@@ -1,53 +1,143 @@
 package com.drake.nalson;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Server {
 
-    private Server _control;
+    public static void main(String args[]) throws IOException {
+        new Server(8080,true).start();
+    }
 
     private final int port;
     private boolean close;
-    private int clientId;
-    private ArrayList<Client> clientList;
+    private boolean debug;
+
     private ServerSocket server;
-    private PrintWriter out;
 
-    Server(int port) throws IOException {
+    private HashMap<Client, Thread> clientList;
+
+    private BufferedReader serverIn;
+
+    Server(int port, boolean debug) throws IOException {
         this.port = port;
-        this._control = this;
+        this.debug = debug;
+        this.serverIn = new BufferedReader(
+                new InputStreamReader(System.in)
+        );
     }
 
-    public int start() throws IOException {
+    public void start() throws IOException {
         this.server = new ServerSocket(port);
-        this.clientList = new ArrayList<>();
+        this.clientList = new HashMap<>();
+
+        debug("Listen on : 127.0.0.1:" + this.port, System.out);
+
+        new Thread(serverListen()).start();
+
+        debug("Start listen keyboard input ", System.out);
+
         while (!close) {
-            Socket incomingConnection = server.accept();
-            Client client = new Client(incomingConnection,_control,clientId++);
-            clientList.add(client);
-            //infoClient("Client " + client.getId() + " connected.");
-            new Thread(client).start();
-        }
-        return 0;
-    }
-
-    public void infoClient(String msg) {
-        System.out.println(msg);
-        for(Client client : this.clientList) {
-            client.send(msg);
+            inputListen();
         }
     }
 
-    public int stop() {
-
-        return 0;
+    public void status() {
+        if(this.server == null) {
+            System.out.println("Server : Off");
+        } else {
+            System.out.println("Server : On");
+        }
     }
 
-    public ArrayList<Client> getClientList() {
+    public void stop() throws IOException {
+        this.close = true;
+        this.server.close();
+        this.serverIn.close();
+        this.clientList.clear();
+
+        debug("Server shutdown...",System.out);
+
+        System.exit(0);
+    }
+
+    private void debug(String msg, PrintStream method) {
+        if(debug) {
+            method.println(msg);
+        }
+    }
+
+    private String clientList() {
+        String result = "";
+        for(HashMap.Entry<Client, Thread> entry : clientList.entrySet()) {
+            result += entry.getKey().getName() + "\n";
+        }
+        return result;
+    }
+
+    private int newClientId() {
+        String newId = "" + (int) Math.floor(10000 * Math.random());
+        while (newId.length() < 4) {
+            newId += "0";
+        }
+        return Integer.parseInt(newId);
+    }
+
+    private Runnable serverListen() {
+        return () -> {
+
+           debug("Server listen success",System.out);
+
+           while (!this.close) {
+               try {
+                   Socket incomingConnection = this.server.accept();
+                   int newId = this.newClientId();
+                   Client client = new Client(incomingConnection, this,newId);
+                   Thread thread = new Thread(client);
+                   this.clientList.put(client, thread);
+                   thread.start();
+
+                   debug(newId + " : New connection success initial.",System.out);
+
+               } catch (IOException e) {
+                   e.printStackTrace();
+               }
+           }
+
+           debug("Server listen close", System.out);
+       };
+    }
+
+    public void inputListen() {
+        try {
+            String input = this.serverIn.readLine();
+            switch (input) {
+                case "status":
+                    this.status();
+                    break;
+                case "list":
+                    System.out.println(clientList());
+                    break;
+                case "close":
+                    this.stop();
+                    break;
+                case "echo":
+                    System.out.println("echo");
+                    break;
+                default:
+                    System.out.println(input + " : not found");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    };
+
+    public HashMap<Client, Thread> getClientList() {
         return clientList;
     }
 

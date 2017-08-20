@@ -32,18 +32,18 @@ public class Client implements Runnable {
                                 "UTF-8"
                         )
                 );
-                clientIn = new BufferedReader(
-                        new InputStreamReader(System.in)
-                );
                 clientOut = new PrintWriter(
                         connection.getOutputStream(),
                         true
                 );
                 while ((cmd = serverIn.readLine()) != null) {
                     if (cmd.equalsIgnoreCase("exit")) break;
-                    for(Client client : server.getClientList()) {
-                        client.send("Client " + id + " : " + cmd);
-                    }
+                    server.getClientList().forEach((k, v) -> {
+                                if(k.id != id) {
+                                    k.send("Client " + id + " : " + cmd);
+                                }
+                            }
+                    );
                 }
             } catch (IOException e) {
                 System.out.println("Err : " + e.getMessage());
@@ -51,12 +51,12 @@ public class Client implements Runnable {
                 clientIn = null;
                 serverIn = null;
                 connection = null;
-                server.infoClient("Info : client (id : " + id + ") disconnected");
+                //server.infoClient("Info : client (id : " + id + ") disconnected");
             }
         }
     }
 
-    public void send(String msg){
+    void send(String msg){
         try {
             this.clientOut.println(msg);
         } catch (NullPointerException e) {
@@ -64,11 +64,11 @@ public class Client implements Runnable {
         }
     }
 
-    public String getId() {
-        if(this.name != "") {
-            return name;
-        } else {
+    public String getName() {
+        if(this.name.equals("")) {
             return String.valueOf(this.id);
+        } else {
+            return name;
         }
     }
 

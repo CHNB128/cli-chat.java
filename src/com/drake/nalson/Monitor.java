@@ -21,7 +21,7 @@ public class Monitor implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
+        while (connection != null) {
             try {
                 System.out.println(inputStream.readLine());
             } catch (IOException ignored) {
