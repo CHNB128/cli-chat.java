@@ -77,17 +77,9 @@ public class Client implements Runnable {
     }
 
     public void sendAll(String msg) {
-        if(groupId == 0){
-            for(HashMap.Entry<Client, Thread> entry : server.getClientList().entrySet()) {
-                if(entry.getKey().id != this.id) {
-                    entry.getKey().send(msg);
-                }
-            }
-        } else {
-            for(HashMap.Entry<Client, Thread> entry : server.getClientList().entrySet()) {
-                if(entry.getKey().id != this.id && entry.getKey().groupId == this.groupId) {
-                    entry.getKey().send(msg);
-                }
+        for(HashMap.Entry<Client, Thread> entry : server.getClientList().entrySet()) {
+            if(entry.getKey().id != this.id && entry.getKey().groupId == this.groupId) {
+                entry.getKey().send(msg);
             }
         }
 
