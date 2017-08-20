@@ -2,24 +2,27 @@ package com.drake.nalson;
 
 import java.io.*;
 import java.net.*;
+import java.util.Date;
+import java.util.HashMap;
 
 public class Client implements Runnable {
 
     private final int id;
     private String name;
-    private Socket connection;
-    private Server server;
+    private final String time;
+    private int groupId;
+    private final Socket connection;
+    private final Server server;
     private BufferedReader serverIn;
-    private BufferedReader clientIn;
     private PrintWriter clientOut;
     private String cmd;
-    private String msg;
 
     Client(Socket incomingConnection,Server server, int clientId) {
         this.connection = incomingConnection;
         this.server = server;
         this.id = clientId;
         this.name = "";
+        this.time = new Date().toString();
     }
 
     @Override
@@ -37,26 +40,35 @@ public class Client implements Runnable {
                         true
                 );
                 while ((cmd = serverIn.readLine()) != null) {
-                    if (cmd.equalsIgnoreCase("exit")) break;
-                    server.getClientList().forEach((k, v) -> {
-                                if(k.id != id) {
-                                    k.send("Client " + id + " : " + cmd);
-                                }
-                            }
-                    );
+                    if(cmd.startsWith("@")) {
+                        String[] tempFormat = cmd.split(" ");
+                        switch (tempFormat[0]) {
+                            case "@setname":
+                                setName(tempFormat[1]);
+                                break;
+                            case "@setgroup":
+                                setGroupId(Integer.parseInt(tempFormat[1]));
+                                break;
+                        }
+                        continue;
+                    }
+                    sendAll(getName() + " : " + cmd);
                 }
             } catch (IOException e) {
                 System.out.println("Err : " + e.getMessage());
             } finally {
-                clientIn = null;
-                serverIn = null;
-                connection = null;
+                try {
+                    serverIn.close();
+                    connection.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 //server.infoClient("Info : client (id : " + id + ") disconnected");
             }
         }
     }
 
-    void send(String msg){
+    public void send(String msg){
         try {
             this.clientOut.println(msg);
         } catch (NullPointerException e) {
@@ -64,12 +76,41 @@ public class Client implements Runnable {
         }
     }
 
+    public void sendAll(String msg) {
+        if(groupId == 0){
+            for(HashMap.Entry<Client, Thread> entry : server.getClientList().entrySet()) {
+                if(entry.getKey().id != this.id) {
+                    entry.getKey().send(msg);
+                }
+            }
+        } else {
+            for(HashMap.Entry<Client, Thread> entry : server.getClientList().entrySet()) {
+                if(entry.getKey().id != this.id && entry.getKey().groupId == this.groupId) {
+                    entry.getKey().send(msg);
+                }
+            }
+        }
+
+    }
+
+    private void setName(String newName) {
+        this.name = newName;
+    }
+
+    private void setGroupId(int newGroupId) {
+        this.groupId = newGroupId;
+    }
+
     public String getName() {
-        if(this.name.equals("")) {
+        if(this.name.length() == 0) {
             return String.valueOf(this.id);
         } else {
             return name;
         }
+    }
+
+    public String getTime() {
+        return time;
     }
 
     /*

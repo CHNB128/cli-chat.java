@@ -32,11 +32,11 @@ public class Out {
             System.out.println("Cannot connect to the server : " + host + ":" + port + "\n" + e.getMessage());
             System.exit(1);
         }
-        PrintWriter out = new PrintWriter(
+        PrintWriter serverOut = new PrintWriter(
                 connection.getOutputStream(),
                 true
         );
-        BufferedReader inu = new BufferedReader(
+        BufferedReader clientIn = new BufferedReader(
                 new InputStreamReader(
                         System.in
                 )
@@ -44,12 +44,12 @@ public class Out {
 
         new Thread(new Monitor(connection)).start();
 
-        while ((userInput = inu.readLine())!=null) {
-            out.println(userInput);
+        while ((userInput = clientIn.readLine())!=null) {
+            serverOut.println(userInput);
         }
 
-        out.close();
-        inu.close();
+        serverOut.close();
+        clientIn.close();
         connection.close();
     }
 }

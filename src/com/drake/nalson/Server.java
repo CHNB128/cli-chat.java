@@ -75,7 +75,7 @@ public class Server {
     private String clientList() {
         String result = "";
         for(HashMap.Entry<Client, Thread> entry : clientList.entrySet()) {
-            result += entry.getKey().getName() + "\n";
+            result += entry.getKey().getTime() + " : " + entry.getKey().getName() + "\n";
         }
         return result;
     }
@@ -115,8 +115,8 @@ public class Server {
 
     public void inputListen() {
         try {
-            String input = this.serverIn.readLine();
-            switch (input) {
+            String[] input = this.serverIn.readLine().split(" ");
+            switch (input[0]) {
                 case "status":
                     this.status();
                     break;
@@ -127,7 +127,7 @@ public class Server {
                     this.stop();
                     break;
                 case "echo":
-                    System.out.println("echo");
+                    sendAll("Server : " + input[1]);
                     break;
                 default:
                     System.out.println(input + " : not found");
@@ -135,7 +135,13 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    };
+    }
+
+    private void sendAll(String msg) {
+        for(HashMap.Entry<Client, Thread> entry : clientList.entrySet()) {
+            entry.getKey().send(msg);
+        }
+    }
 
     public HashMap<Client, Thread> getClientList() {
         return clientList;
