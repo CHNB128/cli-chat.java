@@ -1,4 +1,4 @@
-package com.drake.nalson;
+package com.daren.cli.chat;
 
 import java.io.*;
 import java.net.ServerSocket;
